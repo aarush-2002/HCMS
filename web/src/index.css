@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #05070a;
+  --panel-bg: rgba(10, 14, 18, 0.84);
+  --panel-border: rgba(223, 231, 224, 0.16);
+  --text-primary: #dfe7e0;
+  --text-muted: #9aa5a0;
+  --accent-amber: #f5a524;
+  --color-danger: #ff5a5f;
+  --color-info: #7fb4c9;
+  --color-success: #6fcf97;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Onest', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus ring for interactive elements */
+:focus-visible {
+  outline: 2px solid #f5a524 !important;
+  outline-offset: 2px !important;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #05070a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(223, 231, 224, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 165, 36, 0.5);
+}
+
+/* Glass panel style */
+.hmcs-panel {
+  background-color: rgba(10, 14, 18, 0.84);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(223, 231, 224, 0.16);
+  border-radius: 4px;
+}
+
+/* Minimum accessible touch target utility */
+.min-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}

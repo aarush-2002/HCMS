@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  WARDEN
+  ADMIN
+}
+
+enum ComplaintCategory {
+  PLUMBING
+  ELECTRICAL
+  CLEANLINESS
+  FURNITURE
+  INTERNET
+  OTHER
+}
+
+enum ComplaintPriority {
+  NORMAL
+  EMERGENCY
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  MARKED_RESOLVED
+  RESOLVED
+  REOPENED
+  CLOSED
+  REJECTED
+}
+
+enum ConfirmationVoteType {
+  SOLVED
+  NOT_SOLVED
+}
+
+enum ResetRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Hostel {
+  id                String             @id @default(cuid())
+  name              String
+  code              String             @unique
+  timezone          String             @default("Asia/Kolkata")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  users             User[]
+  wardenAssignments WardenAssignment[]
+  complaints        Complaint[]
+  policy            Policy?
+}
+
+model User {
+  id                   String                 @id @default(cuid())
+  email                String                 @unique
+  studentId            String?                @unique
+  passwordHash         String
+  name                 String
+  roomNumber           String?
+  role                 Role                   @default(STUDENT)
+  isActive             Boolean                @default(true)
+  lastLoginAt          DateTime?
+  hostelId             String
+  hostel               Hostel                 @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  wardenAssignments    WardenAssignment[]
+  submittedComplaints  Complaint[]            @relation("SubmitterComplaints")
+  assignedComplaints   Complaint[]            @relation("AssignedWardenComplaints")
+  upvotes              Upvote[]
+  confirmationVotes    ConfirmationVote[]
+  statusHistories      StatusHistory[]        @relation("ActorStatusHistory")
+  priorityHistories    PriorityHistory[]      @relation("ActorPriorityHistory")
+  ratingsGiven         Rating[]               @relation("ComplainantRatings")
+  ratingsReceived      Rating[]               @relation("WardenRatings")
+  penaltyEvents        PenaltyEvent[]
+  notifications        Notification[]
+  auditEvents          AuditEvent[]
+  refreshTokens        RefreshToken[]
+  passwordResetRequests PasswordResetRequest[]
+  submissionQuotas     SubmissionQuota[]
+
+  @@index([hostelId, role])
+  @@index([role])
+  @@index([studentId])
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model PasswordResetRequest {
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status            ResetRequestStatus @default(PENDING)
+  reason            String?
+  adminNotes        String?
+  reviewedByAdminId String?
+  reviewedAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([userId, status])
+  @@index([status])
+}
+
+model WardenAssignment {
+  id            String   @id @default(cuid())
+  wardenId      String
+  warden        User     @relation(fields: [wardenId], references: [id], onDelete: Cascade)
+  hostelId      String
+  hostel        Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  buildingBlock String?  // e.g. "Block B", "Tagore Hall"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([wardenId, hostelId, buildingBlock])
+  @@index([wardenId])
+  @@index([hostelId])
+}
+
+model Complaint {
+  id                       String             @id @default(cuid())
+  displayNumber            Int                @unique @default(autoincrement())
+  readableId               String?            @unique
+  title                    String
+  description              String
+  category                 ComplaintCategory
+  priority                 ComplaintPriority  @default(NORMAL)
+  status                   ComplaintStatus    @default(SUBMITTED)
+  submitterId              String
+  submitter                User               @relation("SubmitterComplaints", fields: [submitterId], references: [id], onDelete: Cascade)
+  hostelId                 String
+  hostel                   Hostel             @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  assignedWardenId         String?
+  assignedWarden           User?              @relation("AssignedWardenComplaints", fields: [assignedWardenId], references: [id], onDelete: SetNull)
+  deadlineAt               DateTime
+  markedResolvedAt         DateTime?
+  resolvedAt               DateTime?
+  rejectionReason          String?
+  resolutionNote           String?
+  confirmationRound        Int                @default(1)
+  confirmationWindowEndsAt DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  photos                   ComplaintPhoto[]
+  upvotes                  Upvote[]
+  confirmationVotes        ConfirmationVote[]
+  statusHistory            StatusHistory[]
+  priorityHistory          PriorityHistory[]
+  rating                   Rating?
+  penaltyEvents            PenaltyEvent[]
+  notifications            Notification[]
+
+  @@index([hostelId, status])
+  @@index([hostelId, priority])
+  @@index([assignedWardenId, status])
+  @@index([deadlineAt])
+  @@index([submitterId])
+  @@index([status, confirmationWindowEndsAt])
+}
+
+model ComplaintPhoto {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  url         String
+  storageKey  String?
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  uploadedAt  DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+model SubmissionQuota {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotaType   ComplaintPriority // NORMAL or EMERGENCY
+  periodKey   String            // "YYYY-MM-DD" for day, "YYYY-Www" for week
+  complaintId String?
+  createdAt   DateTime          @default(now())
+
+  @@unique([userId, quotaType, periodKey])
+  @@index([userId, quotaType, periodKey])
+}
+
+model Upvote {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([complaintId, userId])
+  @@index([complaintId])
+  @@index([userId])
+}
+
+model StatusHistory {
+  id          String          @id @default(cuid())
+  complaintId String
+  complaint   Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       User?           @relation("ActorStatusHistory", fields: [actorId], references: [id], onDelete: SetNull)
+  fromStatus  ComplaintStatus?
+  toStatus    ComplaintStatus
+  reason      String?
+  createdAt   DateTime        @default(now())
+
+  @@index([complaintId])
+  @@index([actorId])
+}
+
+model PriorityHistory {
+  id                 String             @id @default(cuid())
+  complaintId        String
+  complaint          Complaint          @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actorId            String?
+  actor              User?              @relation("ActorPriorityHistory", fields: [actorId], references: [id], onDelete: SetNull)
+  fromPriority       ComplaintPriority?
+  toPriority         ComplaintPriority
+  reason             String             // e.g. "Auto-promoted after reaching 10 community upvotes"
+  previousDeadlineAt DateTime?
+  newDeadlineAt      DateTime
+  createdAt          DateTime           @default(now())
+
+  @@index([complaintId])
+  @@index([actorId])
+}
+
+model ConfirmationVote {
+  id          String               @id @default(cuid())
+  complaintId String
+  complaint   Complaint            @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  round       Int                  @default(1)
+  vote        ConfirmationVoteType
+  comment     String?
+  createdAt   DateTime             @default(now())
+
+  @@unique([complaintId, userId, round])
+  @@index([complaintId, round])
+  @@index([userId])
+}
+
+model Rating {
+  id              String    @id @default(cuid())
+  complaintId     String
+  complaint       Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complainantId   String
+  complainant     User      @relation("ComplainantRatings", fields: [complainantId], references: [id], onDelete: Cascade)
+  wardenId        String
+  warden          User      @relation("WardenRatings", fields: [wardenId], references: [id], onDelete: Cascade)
+  stars           Int       // 1 to 3
+  comment         String?
+  isHidden        Boolean   @default(false)
+  hiddenReason    String?
+  hiddenByAdminId String?
+  hiddenAt        DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([complaintId])
+  @@index([wardenId])
+  @@index([complainantId])
+  @@index([isHidden])
+}
+
+model PenaltyEvent {
+  id              String    @id @default(cuid())
+  complaintId     String
+  complaint       Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  wardenId        String
+  warden          User      @relation(fields: [wardenId], references: [id], onDelete: Cascade)
+  deadlineAt      DateTime
+  points          Int       @default(1) // represents -1 penalty point
+  reason          String
+  isVoided        Boolean   @default(false)
+  voidedReason    String?
+  voidedByAdminId String?
+  voidedAt        DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([complaintId, deadlineAt])
+  @@index([wardenId])
+  @@index([complaintId])
+}
+
+model Notification {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: SetNull)
+  title       String
+  message     String
+  type        String     // STATUS_CHANGE, PROMOTION, CONFIRMATION_WINDOW, PENALTY, etc.
+  isRead      Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   // COMPLAINT_SUBMITTED, STATUS_CHANGED, PROMOTED_EMERGENCY, CONFIRMATION_VOTE, WARDEN_RATED, PENALTY_VOIDED, POLICY_UPDATED
+  entityType String   // Complaint, Policy, PenaltyEvent, User, etc.
+  entityId   String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([timestamp])
+}
+
+model Policy {
+  id                      String   @id @default(cuid())
+  hostelId                String?  @unique
+  hostel                  Hostel?  @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  normalDeadlineHours     Int      @default(72)
+  emergencyDeadlineHours  Int      @default(24)
+  upvotesToEscalate       Int      @default(10)
+  confirmationsNeeded     Int      @default(3)
+  confirmationWindowHours Int      @default(24)
+  normalDailyLimit        Int      @default(1)
+  emergencyWeeklyLimit    Int      @default(1)
+  timezone                String   @default("Asia/Kolkata")
+  updatedByAdminId        String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([hostelId])
+}
