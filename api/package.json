@@ -22,6 +22,14 @@
   "dependencies": {
     "@hmcs/shared": "*",
     "@prisma/client": "^6.4.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.4",
+    "@types/node-cron": "^3.0.11",
     "argon2": "^0.45.2",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
@@ -35,23 +43,15 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
+    "prisma": "^6.4.1",
     "sharp": "^0.35.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cookie-parser": "^1.4.8",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/jsonwebtoken": "^9.0.8",
-    "@types/multer": "^1.4.12",
-    "@types/node": "^22.13.4",
-    "@types/node-cron": "^3.0.11",
     "@types/supertest": "^6.0.2",
-    "prisma": "^6.4.1",
     "supertest": "^7.0.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   }
 }

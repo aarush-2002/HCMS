@@ -3,6 +3,9 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import requestLogger from './middleware/logger.js';
 import errorHandler, { NotFoundError } from './middleware/errorHandler.js';
 import { verifyCsrf } from './lib/csrf.js';
@@ -68,6 +71,26 @@ app.use('/api/test-scope', testScopeRouter);
 app.use('/api', complaintsRouter);
 app.use('/api', feedAndVotesRouter);
 app.use('/api', resolutionAndHistoryRouter);
+
+// In production, serve the compiled React SPA if present
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const possibleWebDistPaths = [
+  path.resolve(__dirname, '../../web/dist'),
+  path.resolve(process.cwd(), 'web/dist'),
+  path.resolve(process.cwd(), '../web/dist'),
+];
+const resolvedDist = possibleWebDistPaths.find((p) => fs.existsSync(p));
+
+if (resolvedDist && process.env.NODE_ENV === 'production') {
+  app.use(express.static(resolvedDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(resolvedDist, 'index.html'));
+  });
+}
 
 // Catch-all 404 handler for undefined routes
 app.use((req, res, next) => {
