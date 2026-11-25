@@ -129,6 +129,38 @@ export const WardenLoginPage: React.FC = () => {
                   Sign In to Workspace
                 </Button>
               </div>
+
+              <div className="mt-4 p-3 rounded-sm border border-[#7fb4c9]/20 bg-[#7fb4c9]/5 text-xs">
+                <div className="flex items-center justify-between font-medium text-[#7fb4c9] mb-1">
+                  <span>💡 Quick Demo Access</span>
+                  <div className="flex gap-2 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIdentifier('warden.singh@hostel.edu');
+                        setPassword('password123');
+                      }}
+                      className="underline hover:text-[#b4dcf0]"
+                    >
+                      Fill Warden
+                    </button>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIdentifier('admin@hostel.edu');
+                        setPassword('password123');
+                      }}
+                      className="underline hover:text-[#b4dcf0]"
+                    >
+                      Fill Admin
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[#9aa5a0] text-[11px]">
+                  Warden: <code className="text-[#dfe7e0]">warden.singh@hostel.edu</code> | Admin: <code className="text-[#dfe7e0]">admin@hostel.edu</code> (Pass: <code className="text-[#dfe7e0]">password123</code>)
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>

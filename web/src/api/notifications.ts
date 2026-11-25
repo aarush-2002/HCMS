@@ -61,7 +61,10 @@ export function useNotificationStream(onNewNotification?: (notification: Notific
 
     const connectSSE = () => {
       try {
-        eventSource = new EventSource('/api/notifications/stream', {
+        const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || '';
+        const cleanBase = baseUrl.replace(/\/$/, '');
+        const sseUrl = cleanBase ? `${cleanBase}/api/notifications/stream` : '/api/notifications/stream';
+        eventSource = new EventSource(sseUrl, {
           withCredentials: true,
         });
 

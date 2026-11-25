@@ -29,6 +29,7 @@
   "devDependencies": {
     "@playwright/test": "^1.65.1",
     "concurrently": "^9.1.2",
+    "pptxgenjs": "^4.0.1",
     "rimraf": "^6.0.1"
   }
 }

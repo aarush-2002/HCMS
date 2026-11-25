@@ -125,6 +125,25 @@ export const StudentLoginPage: React.FC = () => {
                   Sign In as Student
                 </Button>
               </div>
+
+              <div className="mt-4 p-3 rounded-sm border border-[#f5a524]/20 bg-[#f5a524]/5 text-xs">
+                <div className="flex items-center justify-between font-medium text-[#f5a524] mb-1">
+                  <span>💡 Quick Demo Account</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIdentifier('aarav@hostel.edu');
+                      setPassword('password123');
+                    }}
+                    className="text-[11px] underline hover:text-[#ffc567]"
+                  >
+                    Auto-fill
+                  </button>
+                </div>
+                <p className="text-[#9aa5a0] text-[11px]">
+                  ID: <code className="text-[#dfe7e0]">aarav@hostel.edu</code> | Pass: <code className="text-[#dfe7e0]">password123</code>
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>

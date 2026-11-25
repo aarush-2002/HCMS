@@ -9,11 +9,13 @@ export function generateCsrfToken(): string {
 }
 
 export function setCsrfCookie(res: Response, token?: string): string {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction && process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax';
   const csrfToken = token || generateCsrfToken();
   res.cookie(CSRF_COOKIE_NAME, csrfToken, {
     httpOnly: false, // Must be readable by client JS to send in X-CSRF-Token header
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite,
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });

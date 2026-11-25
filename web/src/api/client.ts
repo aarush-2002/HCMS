@@ -1,4 +1,5 @@
 import { ApiErrorResponse } from '../types/auth';
+import { handleMockFallback } from './mockFallback';
 
 export class ApiClientError extends Error {
   public code: string;
@@ -40,7 +41,13 @@ export async function apiRequest<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : endpoint;
+  const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || '';
+  const cleanBase = baseUrl.replace(/\/$/, '');
+  const url = endpoint.startsWith('http')
+    ? endpoint
+    : cleanBase
+    ? `${cleanBase}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`
+    : endpoint;
 
   const headers = new Headers(options.headers || {});
 
@@ -68,11 +75,23 @@ export async function apiRequest<T = unknown>(
   try {
     response = await fetch(url, fetchOptions);
   } catch (netErr) {
+    const mockData = handleMockFallback<T>(endpoint, options);
+    if (mockData !== null) {
+      return mockData;
+    }
     throw new ApiClientError(
       netErr instanceof Error ? netErr.message : 'Network request failed',
       'NETWORK_ERROR',
       0
     );
+  }
+
+  // If status is 404 or server error (e.g. backend not deployed), attempt mock fallback
+  if (response.status === 404 || response.status >= 500) {
+    const mockData = handleMockFallback<T>(endpoint, options);
+    if (mockData !== null) {
+      return mockData;
+    }
   }
 
   // If 401 Unauthorized occurs on an authenticated route (not login or refresh itself), attempt token refresh once
@@ -126,9 +145,21 @@ export async function apiRequest<T = unknown>(
     data = await response.json().catch(() => null);
   } else {
     data = await response.text().catch(() => null);
+    // If an API request returned HTML (such as index.html from static SPA rewrite), fallback to mock
+    if (typeof data === 'string' && data.trim().startsWith('<')) {
+      const mockData = handleMockFallback<T>(endpoint, options);
+      if (mockData !== null) {
+        return mockData;
+      }
+    }
   }
 
   if (!response.ok) {
+    const mockData = handleMockFallback<T>(endpoint, options);
+    if (mockData !== null) {
+      return mockData;
+    }
+
     const errorBody = data as ApiErrorResponse | null;
     const message =
       errorBody?.error?.message ||

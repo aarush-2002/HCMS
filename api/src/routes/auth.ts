@@ -51,12 +51,13 @@ function setAuthCookies(
   refreshToken: string
 ): void {
   const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction && process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax';
 
   // Short-lived access token cookie (15 minutes)
   res.cookie(ACCESS_COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/',
     maxAge: 15 * 60 * 1000,
   });
@@ -65,7 +66,7 @@ function setAuthCookies(
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/api/auth',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -76,25 +77,26 @@ function setAuthCookies(
 
 function clearAuthCookies(res: Response): void {
   const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction && process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax';
 
   res.clearCookie(ACCESS_COOKIE_NAME, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/',
   });
 
   res.clearCookie(REFRESH_COOKIE_NAME, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/api/auth',
   });
 
   res.clearCookie(CSRF_COOKIE_NAME, {
     httpOnly: false,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/',
   });
 }

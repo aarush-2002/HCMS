@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../api/client';
 import Button from '../../components/ui/Button';
 import Card, { CardTitle, CardDescription } from '../../components/ui/Card';
 import Dialog from '../../components/ui/Dialog';
@@ -26,8 +27,7 @@ export const LandingPage: React.FC = () => {
   });
 
   useEffect(() => {
-    fetch('/api/public/stats')
-      .then((res) => (res.ok ? res.json() : null))
+    apiRequest<PublicStats>('/api/public/stats')
       .then((data) => {
         if (data) setStats(data);
       })

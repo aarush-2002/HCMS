@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { apiRequest } from '../../api/client';
 
 interface PublicStats {
   totalCount: number;
@@ -25,11 +26,8 @@ export const HostelCanvas: React.FC = () => {
     let isMounted = true;
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/public/stats');
-        if (res.ok) {
-          const data: PublicStats = await res.json();
-          if (isMounted) setStats(data);
-        }
+        const data = await apiRequest<PublicStats>('/api/public/stats');
+        if (isMounted && data) setStats(data);
       } catch {
         // Fallback gracefully to subtle baseline if API not yet populated
       }
